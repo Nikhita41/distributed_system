@@ -1,4 +1,4 @@
-
+import time
 email_attempts = 0
 
 def send_email(payload):# TESTING RETRY ENGINESO GOES FAIL FAIL SUCESSS
@@ -24,8 +24,17 @@ def resize_image(payload):
     return f"Image resized: {payload}"
 
 
+def video_processing(payload):
+
+    print(f"Processing video: {payload}")
+
+    time.sleep(10)
+
+    return f"Video processed: {payload}"
+
 TASK_HANDLERS = {
     "email": send_email,
     "report": generate_report,
-    "image": resize_image
+    "image": resize_image,
+    "video": video_processing
 }

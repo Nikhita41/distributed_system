@@ -12,6 +12,7 @@ class Task(Base):
     status = Column(String)
     result = Column(String, nullable=True)
     retry_count = Column(Integer, default=0)
+    deadline_hours = Column(Integer, default=24)
 
     created_at = Column(
         DateTime,

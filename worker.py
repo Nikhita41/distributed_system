@@ -5,7 +5,8 @@ from app.handlers import TASK_HANDLERS
 from datetime import datetime, UTC
 import time
 import random
-
+from app.scoring import calculate_score
+from datetime import datetime
 from app.circuit_breaker import can_execute, record_success, record_failure
 
 MAX_RETRIES = 5
@@ -13,17 +14,21 @@ MAX_RETRIES = 5
 print("Worker started...")
 
 while True:
+    r.set(
+    "worker_heartbeat",
+    datetime.now().isoformat()
+)
 
-    task_id = (
-        r.rpop("high_priority_queue")
-        or r.rpop("medium_priority_queue")
-        or r.rpop("low_priority_queue")
-    )
+    task_data = r.zpopmax("task_queue")
 
-    if not task_id:
+    if not task_data:
         time.sleep(1)
         continue
 
+    task_id = task_data[0][0]
+
+    if isinstance(task_id, bytes):
+        task_id = task_id.decode()
     print(f"Found task: {task_id}")
 
     db = SessionLocal()
@@ -111,17 +116,12 @@ while True:
 
                 db.commit()
 
-                if task.priority >= 8:
+                score = calculate_score(task)
 
-                    r.lpush("high_priority_queue", task.id)
-
-                elif task.priority >= 4:
-
-                    r.lpush("medium_priority_queue", task.id)
-
-                else:
-
-                    r.lpush("low_priority_queue", task.id)
+                r.zadd(
+                    "task_queue",
+                    {task.id: score}
+                )
 
             else:
                 
