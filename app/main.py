@@ -6,7 +6,7 @@ from app.database import engine, get_db
 from app.models import Task
 from app.schemas import TaskCreate
 from app.scoring import calculate_score
-from datetime import datetime
+from datetime import datetime, UTC
 app = FastAPI()
 
 Task.metadata.create_all(bind=engine)
@@ -127,23 +127,15 @@ def worker_health():
     heartbeat = r.get("worker_heartbeat")
 
     if not heartbeat:
-        return {
-            "status": "OFFLINE"
-        }
+        return {"status": "OFFLINE"}
 
-    heartbeat = datetime.fromisoformat(
-        heartbeat.decode()
-    )
+    heartbeat = datetime.fromisoformat(heartbeat)
 
     diff = (
         datetime.now() - heartbeat
     ).total_seconds()
 
     if diff < 30:
-        return {
-            "status": "HEALTHY"
-        }
+        return {"status": "HEALTHY"}
 
-    return {
-        "status": "OFFLINE"
-    }
+    return {"status": "OFFLINE"}
